@@ -208,11 +208,13 @@
         gap: 10px;
         margin-bottom: 15px;
     }
-    .input-group input {
+    .input-group input, .input-group select {
         padding: 10px;
         border: 1px solid #ccc;
         border-radius: 6px;
         font-size: 16px;
+        font-family: inherit;
+        background-color: white;
     }
     .btn-modal {
         padding: 12px;
@@ -229,13 +231,17 @@
     .btn-close {
         background: var(--btn-gray);
     }
+    .btn-danger {
+        background: var(--btn-red);
+        margin-top: 20px;
+    }
 
 </style>
 </head>
-<body>
+<body onload="updateUI()">
 
     <div class="app-header">
-        <span class="title">Stat Tracker</span>
+        <span class="title">Newhaven FC Match Tracker</span>
         <button class="btn-export" onclick="exportCSV()">Export</button>
     </div>
 
@@ -434,22 +440,77 @@
             <div class="input-group">
                 <input type="text" id="newName" placeholder="Player Name">
                 <input type="number" id="newNumber" placeholder="Shirt Number">
-                <input type="text" id="newPos" placeholder="Position (e.g. LW, CM)">
+                
+                <!-- NEW POSITION DROPDOWN MENU -->
+                <select id="newPos" onchange="checkGKRedirect()">
+                    <option value="" disabled selected>Select Position...</option>
+                    <option value="ST">Striker (ST)</option>
+                    <option value="LW">Left Wing (LW)</option>
+                    <option value="RW">Right Wing (RW)</option>
+                    <option value="CAM">Attacking Mid (CAM)</option>
+                    <option value="CM">Central Mid (CM)</option>
+                    <option value="CDM">Defensive Mid (CDM)</option>
+                    <option value="LB">Left Back (LB)</option>
+                    <option value="CB">Center Back (CB)</option>
+                    <option value="RB">Right Back (RB)</option>
+                    <option value="GK">Goalkeeper (GK)</option>
+                </select>
+                
             </div>
             <button class="btn-modal" onclick="addPlayer()">Add Player to Team</button>
             <button class="btn-modal btn-close" onclick="closeModal()">Close Window</button>
+            
+            <button class="btn-modal btn-danger" onclick="clearAllData()">Reset All Data for New Match</button>
         </div>
     </div>
 
 <script>
-    // State Management - Switched to 'var' for TrebEdit hot-reload support
-    var players = {};
-    var currentPlayerId = null;
+    // State Management - Loading from Local Storage if it exists
+    var savedPlayers = localStorage.getItem('matchTrackerPlayers');
+    var savedCurrentId = localStorage.getItem('matchTrackerCurrentId');
+
+    var players = savedPlayers ? JSON.parse(savedPlayers) : {};
+    var currentPlayerId = savedCurrentId ? savedCurrentId : null;
+    
     var statKeys = ['mins', 'goals', 'assists', 'dribbles', 'passSucc', 'passFail', 'shotOn', 'shotOff', 'crossSucc', 'crossFail', 'tackWon', 'tackLost', 'intcpt', 'disposs', 'foulWon', 'foulCon'];
+
+    // Function to check if GK is selected in dropdown
+    function checkGKRedirect() {
+        var pos = document.getElementById('newPos').value;
+        if (pos === 'GK') {
+            if(confirm("Goalkeepers use different stats! Would you like to jump over to the Goalkeeper Tracker now?")) {
+                window.location.href = "gk-tracker.html";
+            } else {
+                document.getElementById('newPos').value = ""; // Reset dropdown if they cancel
+            }
+        }
+    }
+
+    // Function to save data to device memory
+    function saveData() {
+        localStorage.setItem('matchTrackerPlayers', JSON.stringify(players));
+        if (currentPlayerId) {
+            localStorage.setItem('matchTrackerCurrentId', currentPlayerId);
+        } else {
+            localStorage.removeItem('matchTrackerCurrentId');
+        }
+    }
+
+    // Function to clear all data
+    function clearAllData() {
+        if(confirm("Are you sure you want to delete all players and stats? This cannot be undone!")) {
+            players = {};
+            currentPlayerId = null;
+            saveData();
+            updateUI();
+            closeModal();
+            alert("All data cleared ready for the next match.");
+        }
+    }
 
     // UI Update Logic
     function updateUI() {
-        if (!currentPlayerId) {
+        if (!currentPlayerId || !players[currentPlayerId]) {
             document.getElementById('activePlayerDisplay').innerText = "👕 Tap here to add/select player";
             document.getElementById('activePlayerHint').innerText = "Currently viewing: No player selected";
             statKeys.forEach(function(key) {
@@ -513,6 +574,8 @@
         
         players[currentPlayerId].stats[id] = newVal;
         document.getElementById(id).innerText = newVal;
+        
+        saveData(); // Save to memory immediately
     }
 
     function updateStatCalc(id, change, type) {
@@ -565,10 +628,10 @@
     function addPlayer() {
         var name = document.getElementById('newName').value.trim();
         var num = document.getElementById('newNumber').value.trim();
-        var pos = document.getElementById('newPos').value.trim();
+        var pos = document.getElementById('newPos').value; // Using dropdown value
 
-        if(!name || !num) {
-            alert("Please enter both a Player Name and a Shirt Number.");
+        if(!name || !num || !pos) {
+            alert("Please enter a Player Name, Shirt Number, and select a Position.");
             return;
         }
 
@@ -576,7 +639,7 @@
         players[id] = {
             name: name, 
             number: num, 
-            position: pos || 'N/A',
+            position: pos,
             stats: {
                 mins: 0, goals: 0, assists: 0, dribbles: 0,
                 passSucc: 0, passFail: 0, shotOn: 0, shotOff: 0,
@@ -590,12 +653,13 @@
         document.getElementById('newNumber').value = '';
         document.getElementById('newPos').value = '';
 
-        // Auto-select the newly added player
+        saveData(); // Save new player to memory
         selectPlayer(id);
     }
 
     function selectPlayer(id) {
         currentPlayerId = id;
+        saveData(); // Save current player selection to memory
         updateUI();
         closeModal();
     }
@@ -626,6 +690,16 @@
         link.click();
         document.body.removeChild(link);
     }
+
+    // Attach to global window object
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+    window.addPlayer = addPlayer;
+    window.updateStat = updateStat;
+    window.updateStatCalc = updateStatCalc;
+    window.exportCSV = exportCSV;
+    window.clearAllData = clearAllData;
+    window.checkGKRedirect = checkGKRedirect;
 </script>
 
 </body>
