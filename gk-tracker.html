@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GK Stat Tracker</title>
+<style>
+    :root {
+        --bg-main: #f0f2f6;
+        --text-dark: #1a1c20;
+        --btn-gray: #9ba4b5;
+        --btn-blue: #3b71f7;
+        --btn-green: #2fa84b;
+        --btn-red: #d32f2f;
+        --bar-green: #d4edda;
+        --bar-blue: #d6e4ff;
+        --bar-cyan: #cbf5fc;
+        --bar-yellow: #fff3cd;
+    }
+
+    body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-dark);
+        padding-bottom: 20px;
+    }
+
+    /* Header */
+    .app-header {
+        background-color: #2c3e50; /* Slightly different color for GK app */
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 18px;
+    }
+    .app-header .title {
+        font-weight: 500;
+    }
+    
+    .btn-export {
+        background-color: var(--btn-green);
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    .btn-export:active {
+        opacity: 0.8;
+    }
+
+    /* Player Info Banner (Clickable) */
+    .player-info {
+        background: white;
+        text-align: center;
+        padding: 15px;
+        font-weight: bold;
+        font-size: 18px;
+        border-bottom: 1px solid #ddd;
+        cursor: pointer;
+        color: var(--btn-blue);
+    }
+    .player-info:active {
+        background: #f8f9fa;
+    }
+    .player-hint {
+        display: block;
+        font-size: 12px;
+        color: #666;
+        font-weight: normal;
+        margin-top: 4px;
+    }
+
+    /* Cards */
+    .card {
+        background: white;
+        border-radius: 12px;
+        margin: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .card-title {
+        text-align: center;
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 15px;
+    }
+
+    /* Stat Rows */
+    .row {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 12px;
+    }
+    .stat-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 45%;
+    }
+    .stat-label {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 5px;
+        text-align: center;
+    }
+    .stat-val-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .stat-value {
+        font-size: 20px;
+        font-weight: bold;
+        width: 25px;
+        text-align: center;
+    }
+
+    /* Buttons */
+    .btn {
+        border: none;
+        border-radius: 8px;
+        width: 45px;
+        height: 32px;
+        color: white;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+        touch-action: manipulation;
+    }
+    .btn:active {
+        opacity: 0.8;
+    }
+    .btn-minus { background-color: var(--btn-gray); }
+    .btn-blue { background-color: var(--btn-blue); }
+    .btn-green { background-color: var(--btn-green); }
+    .btn-red { background-color: var(--btn-red); }
+
+    /* Progress Bars */
+    .progress-bar {
+        text-align: center;
+        padding: 6px;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+    .bg-green { background-color: var(--bar-green); color: #155724; }
+    .bg-blue { background-color: var(--bar-blue); color: #002d7a; }
+    .bg-cyan { background-color: var(--bar-cyan); color: #005c6e; }
+    .bg-yellow { background-color: var(--bar-yellow); color: #856404; }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        width: 85%;
+        max-width: 400px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    .modal-content h3 { margin-top: 0; text-align: center; }
+    
+    .player-list {
+        margin-bottom: 20px;
+        max-height: 150px;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        border-radius: 8px;
+    }
+    .player-item {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .player-item:last-child { border-bottom: none; }
+    .player-item:active { background-color: #f0f0f0; }
+    .player-item.active-player {
+        background-color: var(--bar-blue);
+        font-weight: bold;
+    }
+
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .input-group input {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px;
+    }
+    .btn-modal {
+        padding: 12px;
+        background: var(--btn-blue);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        width: 100%;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-bottom: 10px;
+    }
+    .btn-close {
+        background: var(--btn-gray);
+    }
+    .btn-danger {
+        background: var(--btn-red);
+        margin-top: 20px;
+    }
+
+</style>
+</head>
+<body onload="updateUI()">
+
+    <div class="app-header">
+        <span class="title">Newhaven FC GK Tracker</span>
+        <button class="btn-export" onclick="exportCSV()">Export</button>
+    </div>
+
+    <!-- CLICKABLE PLAYER SELECTION BANNER -->
+    <div class="player-info" onclick="openModal()">
+        <span id="activePlayerDisplay">🧤 Tap here to add/select GK</span>
+        <span class="player-hint" id="activePlayerHint">Currently viewing: No player selected</span>
+    </div>
+
+    <!-- SHOT STOPPING SUMMARY -->
+    <div class="card">
+        <div class="card-title">Shot Stopping</div>
+        <div class="row">
+            <div class="stat-group">
+                <div class="stat-label">Minutes</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('mins', -1)">-</button>
+                    <div class="stat-value" id="mins">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('mins', 1)">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Drops / Spills</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('spills', -1)">-</button>
+                    <div class="stat-value" id="spills">0</div>
+                    <button class="btn btn-red" onclick="updateStat('spills', 1)">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="stat-group">
+                <div class="stat-label">Saves Made</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('saves', -1, 'save')">-</button>
+                    <div class="stat-value" id="saves">0</div>
+                    <button class="btn btn-green" onclick="updateStatCalc('saves', 1, 'save')">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Goals Conceded</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('goalsConc', -1, 'save')">-</button>
+                    <div class="stat-value" id="goalsConc">0</div>
+                    <button class="btn btn-red" onclick="updateStatCalc('goalsConc', 1, 'save')">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="progress-bar bg-green" id="saveBar">Save Percentage: 0% (0/0)</div>
+    </div>
+
+    <!-- DISTRIBUTION -->
+    <div class="card">
+        <div class="card-title">Distribution</div>
+        <div class="row">
+            <div class="stat-group">
+                <div class="stat-label">Kicks (Succ)</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('kickSucc', -1, 'kick')">-</button>
+                    <div class="stat-value" id="kickSucc">0</div>
+                    <button class="btn btn-blue" onclick="updateStatCalc('kickSucc', 1, 'kick')">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Kicks (Fail)</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('kickFail', -1, 'kick')">-</button>
+                    <div class="stat-value" id="kickFail">0</div>
+                    <button class="btn btn-blue" onclick="updateStatCalc('kickFail', 1, 'kick')">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="progress-bar bg-blue" id="kickBar">Kicking Accuracy: 0% (0/0)</div>
+
+        <div class="row" style="margin-top: 15px;">
+            <div class="stat-group">
+                <div class="stat-label">Throws (Succ)</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('throwSucc', -1, 'throw')">-</button>
+                    <div class="stat-value" id="throwSucc">0</div>
+                    <button class="btn btn-blue" onclick="updateStatCalc('throwSucc', 1, 'throw')">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Throws (Fail)</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('throwFail', -1, 'throw')">-</button>
+                    <div class="stat-value" id="throwFail">0</div>
+                    <button class="btn btn-blue" onclick="updateStatCalc('throwFail', 1, 'throw')">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="progress-bar bg-cyan" id="throwBar">Throwing Accuracy: 0% (0/0)</div>
+    </div>
+
+    <!-- COMMAND OF AREA -->
+    <div class="card">
+        <div class="card-title">Command of Area</div>
+        <div class="row">
+            <div class="stat-group">
+                <div class="stat-label">Crosses Claimed</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('crossClaim', -1)">-</button>
+                    <div class="stat-value" id="crossClaim">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('crossClaim', 1)">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Punches</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('punch', -1)">-</button>
+                    <div class="stat-value" id="punch">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('punch', 1)">+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 15px;">
+            <div class="stat-group">
+                <div class="stat-label">Sweeper Actions</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('sweep', -1)">-</button>
+                    <div class="stat-value" id="sweep">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('sweep', 1)">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">1v1s Won</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('oneVone', -1)">-</button>
+                    <div class="stat-value" id="oneVone">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('oneVone', 1)">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PENALTIES & DISCIPLINE -->
+    <div class="card">
+        <div class="card-title">Penalties & Discipline</div>
+        <div class="row">
+            <div class="stat-group">
+                <div class="stat-label">Pens Faced</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('pensFaced', -1)">-</button>
+                    <div class="stat-value" id="pensFaced">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('pensFaced', 1)">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Pens Saved</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('pensSaved', -1)">-</button>
+                    <div class="stat-value" id="pensSaved">0</div>
+                    <button class="btn btn-green" onclick="updateStat('pensSaved', 1)">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 15px;">
+            <div class="stat-group">
+                <div class="stat-label">Fouls Won</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('foulWon', -1)">-</button>
+                    <div class="stat-value" id="foulWon">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('foulWon', 1)">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Fouls Conceded</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('foulCon', -1)">-</button>
+                    <div class="stat-value" id="foulCon">0</div>
+                    <button class="btn btn-red" onclick="updateStat('foulCon', 1)">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FOR PLAYER ROSTER -->
+    <div id="playerModal" class="modal">
+        <div class="modal-content">
+            <h3>GK Roster</h3>
+            <div class="player-list" id="playerList">
+                <!-- Players injected here via JS -->
+            </div>
+            
+            <hr style="border: 0.5px solid #ddd; margin: 15px 0;">
+            
+            <h4 style="margin-top:0; text-align:center;">Add New Goalkeeper</h4>
+            <div class="input-group">
+                <input type="text" id="newName" placeholder="Player Name">
+                <input type="number" id="newNumber" placeholder="Shirt Number (e.g. 1)">
+            </div>
+            <button class="btn-modal" onclick="addPlayer()">Add GK to Team</button>
+            <button class="btn-modal btn-close" onclick="closeModal()">Close Window</button>
+            
+            <button class="btn-modal btn-danger" onclick="clearAllData()">Reset All Data for New Match</button>
+        </div>
+    </div>
+
+<script>
+    // State Management - Custom GK storage keys so it doesn't overlap outfield players
+    var savedPlayers = localStorage.getItem('gkTrackerPlayers');
+    var savedCurrentId = localStorage.getItem('gkTrackerCurrentId');
+
+    var players = savedPlayers ? JSON.parse(savedPlayers) : {};
+    var currentPlayerId = savedCurrentId ? savedCurrentId : null;
+    
+    var statKeys = ['mins', 'spills', 'saves', 'goalsConc', 'kickSucc', 'kickFail', 'throwSucc', 'throwFail', 'crossClaim', 'punch', 'sweep', 'oneVone', 'pensFaced', 'pensSaved', 'foulWon', 'foulCon'];
+
+    // Function to save data to device memory
+    function saveData() {
+        localStorage.setItem('gkTrackerPlayers', JSON.stringify(players));
+        if (currentPlayerId) {
+            localStorage.setItem('gkTrackerCurrentId', currentPlayerId);
+        } else {
+            localStorage.removeItem('gkTrackerCurrentId');
+        }
+    }
+
+    // Function to clear all data
+    function clearAllData() {
+        if(confirm("Are you sure you want to delete all GK stats? This cannot be undone!")) {
+            players = {};
+            currentPlayerId = null;
+            saveData();
+            updateUI();
+            closeModal();
+            alert("All GK data cleared ready for the next match.");
+        }
+    }
+
+    // UI Update Logic
+    function updateUI() {
+        if (!currentPlayerId || !players[currentPlayerId]) {
+            document.getElementById('activePlayerDisplay').innerText = "🧤 Tap here to add/select GK";
+            document.getElementById('activePlayerHint').innerText = "Currently viewing: No player selected";
+            statKeys.forEach(function(key) {
+                document.getElementById(key).innerText = '0';
+            });
+            updateBars(null);
+            return;
+        }
+
+        var p = players[currentPlayerId];
+        document.getElementById('activePlayerDisplay').innerText = `🧤 #${p.number} ${p.name}`;
+        document.getElementById('activePlayerHint').innerText = `Position: GK (Tap to change)`;
+
+        statKeys.forEach(function(key) {
+            document.getElementById(key).innerText = p.stats[key];
+        });
+        updateBars(p.stats);
+    }
+
+    function updateBars(stats) {
+        if(!stats) {
+            document.getElementById('saveBar').innerText = `Save Percentage: 0% (0/0)`;
+            document.getElementById('kickBar').innerText = `Kicking Accuracy: 0% (0/0)`;
+            document.getElementById('throwBar').innerText = `Throwing Accuracy: 0% (0/0)`;
+            return;
+        }
+
+        // Save Percentage (Saves vs Goals Conceded)
+        var saveTotal = stats.saves + stats.goalsConc;
+        var savePerc = saveTotal === 0 ? 0 : Math.round((stats.saves / saveTotal) * 100);
+        document.getElementById('saveBar').innerText = `Save Percentage: ${savePerc}% (${stats.saves}/${saveTotal} Shots on Target)`;
+
+        // Kicking Accuracy
+        var kickTotal = stats.kickSucc + stats.kickFail;
+        var kickPerc = kickTotal === 0 ? 0 : Math.round((stats.kickSucc / kickTotal) * 100);
+        document.getElementById('kickBar').innerText = `Kicking Accuracy: ${kickPerc}% (${stats.kickSucc}/${kickTotal})`;
+
+        // Throwing Accuracy
+        var throwTotal = stats.throwSucc + stats.throwFail;
+        var throwPerc = throwTotal === 0 ? 0 : Math.round((stats.throwSucc / throwTotal) * 100);
+        document.getElementById('throwBar').innerText = `Throwing Accuracy: ${throwPerc}% (${stats.throwSucc}/${throwTotal})`;
+    }
+
+    // Stat Modification Logic
+    function updateStat(id, change) {
+        if (!currentPlayerId) {
+            alert("Please add and select a GK from the menu first!");
+            openModal();
+            return;
+        }
+        
+        var currentVal = players[currentPlayerId].stats[id];
+        var newVal = currentVal + change;
+        if (newVal < 0) newVal = 0;
+        
+        players[currentPlayerId].stats[id] = newVal;
+        document.getElementById(id).innerText = newVal;
+        
+        saveData();
+    }
+
+    function updateStatCalc(id, change, type) {
+        if (!currentPlayerId) {
+            alert("Please add and select a GK from the menu first!");
+            openModal();
+            return;
+        }
+        updateStat(id, change);
+        updateBars(players[currentPlayerId].stats);
+    }
+
+    // Modal & Roster Logic
+    function openModal() {
+        document.getElementById('playerModal').style.display = 'flex';
+        renderPlayerList();
+    }
+
+    function closeModal() {
+        document.getElementById('playerModal').style.display = 'none';
+    }
+
+    function renderPlayerList() {
+        var list = document.getElementById('playerList');
+        list.innerHTML = '';
+        
+        var count = 0;
+        for (var id in players) {
+            count++;
+            var p = players[id];
+            var div = document.createElement('div');
+            div.className = 'player-item';
+            if (id === currentPlayerId) div.classList.add('active-player');
+            
+            div.innerHTML = `<span><b>#${p.number} ${p.name}</b> (GK)</span> <span>&#x276F;</span>`;
+            
+            (function(playerId) {
+                div.onclick = function() { selectPlayer(playerId); };
+            })(id);
+            
+            list.appendChild(div);
+        }
+
+        if(count === 0) {
+            list.innerHTML = '<div style="padding:10px; text-align:center; color:#666;">No GKs added yet.</div>';
+        }
+    }
+
+    function addPlayer() {
+        var name = document.getElementById('newName').value.trim();
+        var num = document.getElementById('newNumber').value.trim();
+
+        if(!name || !num) {
+            alert("Please enter both a Player Name and a Shirt Number.");
+            return;
+        }
+
+        var id = Date.now().toString();
+        players[id] = {
+            name: name, 
+            number: num, 
+            position: 'GK',
+            stats: {
+                mins: 0, spills: 0, saves: 0, goalsConc: 0,
+                kickSucc: 0, kickFail: 0, throwSucc: 0, throwFail: 0,
+                crossClaim: 0, punch: 0, sweep: 0, oneVone: 0,
+                pensFaced: 0, pensSaved: 0, foulWon: 0, foulCon: 0
+            }
+        };
+
+        // Clear inputs
+        document.getElementById('newName').value = '';
+        document.getElementById('newNumber').value = '';
+
+        saveData();
+        selectPlayer(id);
+    }
+
+    function selectPlayer(id) {
+        currentPlayerId = id;
+        saveData();
+        updateUI();
+        closeModal();
+    }
+
+    // Export to CSV Logic
+    function exportCSV() {
+        if (Object.keys(players).length === 0) {
+            alert("No players have been added yet!");
+            return;
+        }
+
+        var csvContent = "data:text/csv;charset=utf-8,";
+        // Header updated for GK stats
+        csvContent += "Name,Number,Position,Minutes,Goals Conceded,Saves Made,Drops/Spills,Kicks (Succ),Kicks (Fail),Throws (Succ),Throws (Fail),Crosses Claimed,Punches,Sweeper Actions,1v1s Won,Pens Faced,Pens Saved,Fouls Won,Fouls Conceded\n";
+
+        for (var id in players) {
+            var p = players[id];
+            var s = p.stats;
+            var row = `${p.name},${p.number},${p.position},${s.mins},${s.goalsConc},${s.saves},${s.spills},${s.kickSucc},${s.kickFail},${s.throwSucc},${s.throwFail},${s.crossClaim},${s.punch},${s.sweep},${s.oneVone},${s.pensFaced},${s.pensSaved},${s.foulWon},${s.foulCon}`;
+            csvContent += row + "\n";
+        }
+
+        var encodedUri = encodeURI(csvContent);
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "GK_Match_Stats.csv");
+        
+        document.body.appendChild(link); 
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // Attach to global window object
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+    window.addPlayer = addPlayer;
+    window.updateStat = updateStat;
+    window.updateStatCalc = updateStatCalc;
+    window.exportCSV = exportCSV;
+    window.clearAllData = clearAllData;
+</script>
+
+</body>
+</html>
