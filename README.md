@@ -14,7 +14,7 @@ A lightweight, mobile-first web application designed for touchline football (soc
 
 Because this is a Single Page Application (SPA) built with vanilla HTML/JS, it runs directly in your web browser. 
 
-1. **Open the live tracker here:** `https://timmysd88.github.io/match-tracker/` 
+1. **Open the live tracker here:** `https://timmysd88.github.io/Match-tracker/` 
 2. **Add to Home Screen:** For the best experience, open the link in Safari (iOS) or Chrome (Android), open the browser menu, and select **"Add to Home Screen"**. This will install the tracker as a full-screen app icon on your phone.
 3. **Start Tracking:** Tap the top banner to build your matchday roster. Select a player to start tracking their stats.
 4. **Export:** At the full-time whistle, tap **Export** to download the team's spreadsheet. 
