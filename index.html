@@ -818,7 +818,7 @@
 
         var id = Date.now().toString();
         
-        // Initialize player with 0s for all stats (both outfield and GK)
+        // Initialize player with 0s for all stats
         var freshStats = {};
         allStatKeys.forEach(function(key) { freshStats[key] = 0; });
 
@@ -845,30 +845,59 @@
         closeModal();
     }
 
-    // Unified Export to CSV Logic
+    // Unified Export to CSV Logic (Using Blob for robust spreadsheet formatting)
     function exportCSV() {
         if (Object.keys(players).length === 0) {
             alert("No players have been added yet!");
             return;
         }
 
-        var csvContent = "data:text/csv;charset=utf-8,";
-        
-        // Giant header row capturing every possible stat
-        csvContent += "Name,Number,Position,Minutes,Goals,Assists,Dribbles (Succ),Passes (Succ),Passes (Fail),Shots on Target,Shots off Target,Crosses (Succ),Crosses (Failed),Tackles Won,Tackles Lost,Interceptions,Dispossessed,Fouls Won,Fouls Conceded,GK Saves,GK Goals Conceded,GK Drops/Spills,GK Kicks (Succ),GK Kicks (Fail),GK Throws (Succ),GK Throws (Fail),GK Crosses Claimed,GK Punches,GK Sweeper Actions,GK 1v1s Won,GK Pens Faced,GK Pens Saved\n";
+        // Headers arranged with Position, Name, and Number first
+        var headers = [
+            "Position", "Name", "Number", "Minutes", "Goals", "Assists", "Dribbles (Succ)",
+            "Passes (Succ)", "Passes (Fail)", "Shots on Target", "Shots off Target",
+            "Crosses (Succ)", "Crosses (Failed)", "Tackles Won", "Tackles Lost",
+            "Interceptions", "Dispossessed", "Fouls Won", "Fouls Conceded",
+            "GK Saves", "GK Goals Conceded", "GK Drops/Spills", "GK Kicks (Succ)",
+            "GK Kicks (Fail)", "GK Throws (Succ)", "GK Throws (Fail)", "GK Crosses Claimed",
+            "GK Punches", "GK Sweeper Actions", "GK 1v1s Won", "GK Pens Faced", "GK Pens Saved"
+        ];
+
+        var csvRows = [];
+        // Add headers to row data
+        csvRows.push('"' + headers.join('","') + '"');
 
         for (var id in players) {
             var p = players[id];
             var s = p.stats;
-            var row = `${p.name},${p.number},${p.position},${s.mins || 0},${s.goals || 0},${s.assists || 0},${s.dribbles || 0},${s.passSucc || 0},${s.passFail || 0},${s.shotOn || 0},${s.shotOff || 0},${s.crossSucc || 0},${s.crossFail || 0},${s.tackWon || 0},${s.tackLost || 0},${s.intcpt || 0},${s.disposs || 0},${s.foulWon || 0},${s.foulCon || 0},${s.saves || 0},${s.goalsConc || 0},${s.spills || 0},${s.kickSucc || 0},${s.kickFail || 0},${s.throwSucc || 0},${s.throwFail || 0},${s.crossClaim || 0},${s.punch || 0},${s.sweep || 0},${s.oneVone || 0},${s.pensFaced || 0},${s.pensSaved || 0}`;
-            csvContent += row + "\n";
+            
+            var rowData = [
+                p.position, p.name, p.number,
+                s.mins || 0, s.goals || 0, s.assists || 0, s.dribbles || 0,
+                s.passSucc || 0, s.passFail || 0, s.shotOn || 0, s.shotOff || 0,
+                s.crossSucc || 0, s.crossFail || 0, s.tackWon || 0, s.tackLost || 0,
+                s.intcpt || 0, s.disposs || 0, s.foulWon || 0, s.foulCon || 0,
+                s.saves || 0, s.goalsConc || 0, s.spills || 0, s.kickSucc || 0,
+                s.kickFail || 0, s.throwSucc || 0, s.throwFail || 0, s.crossClaim || 0,
+                s.punch || 0, s.sweep || 0, s.oneVone || 0, s.pensFaced || 0, s.pensSaved || 0
+            ];
+            
+            // Format each row with quotes to prevent OpenOffice from messing up columns
+            var formattedRow = rowData.map(function(item) {
+                return '"' + String(item).replace(/"/g, '""') + '"';
+            });
+            
+            csvRows.push(formattedRow.join(","));
         }
 
-        var encodedUri = encodeURI(csvContent);
-        var link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "Team_Match_Stats.csv");
+        var csvString = csvRows.join("\r\n");
+        // Create Blob to fix formatting and character limits
+        var blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
         
+        var link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", "Team_Match_Stats.csv");
         document.body.appendChild(link); 
         link.click();
         document.body.removeChild(link);
