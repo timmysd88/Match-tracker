@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Match Stat Tracker</title>
+<style>
+    :root {
+        --bg-main: #f0f2f6;
+        --text-dark: #1a1c20;
+        --btn-gray: #9ba4b5;
+        --btn-blue: #3b71f7;
+        --btn-green: #2fa84b;
+        --btn-red: #d32f2f;
+        --bar-green: #d4edda;
+        --bar-blue: #d6e4ff;
+        --bar-cyan: #cbf5fc;
+        --bar-yellow: #fff3cd;
+    }
+
+    body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-dark);
+        padding-bottom: 20px;
+    }
+
+    /* Header */
+    .app-header {
+        background-color: #4b515d;
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 18px;
+    }
+    .app-header .title {
+        font-weight: 500;
+    }
+    
+    .btn-export {
+        background-color: var(--btn-green);
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    .btn-export:active {
+        opacity: 0.8;
+    }
+
+    /* Player Info Banner (Clickable) */
+    .player-info {
+        background: white;
+        text-align: center;
+        padding: 15px;
+        font-weight: bold;
+        font-size: 18px;
+        border-bottom: 1px solid #ddd;
+        cursor: pointer;
+        color: var(--btn-blue);
+    }
+    .player-info:active {
+        background: #f8f9fa;
+    }
+    .player-hint {
+        display: block;
+        font-size: 12px;
+        color: #666;
+        font-weight: normal;
+        margin-top: 4px;
+    }
+
+    /* Cards */
+    .card {
+        background: white;
+        border-radius: 12px;
+        margin: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .card-title {
+        text-align: center;
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 15px;
+    }
+
+    /* Stat Rows */
+    .row {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 12px;
+    }
+    .stat-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 45%;
+    }
+    .stat-label {
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 5px;
+        text-align: center;
+    }
+    .stat-val-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .stat-value {
+        font-size: 20px;
+        font-weight: bold;
+        width: 25px;
+        text-align: center;
+    }
+
+    /* Buttons */
+    .btn {
+        border: none;
+        border-radius: 8px;
+        width: 45px;
+        height: 32px;
+        color: white;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+        touch-action: manipulation;
+    }
+    .btn:active {
+        opacity: 0.8;
+    }
+    .btn-minus { background-color: var(--btn-gray); }
+    .btn-blue { background-color: var(--btn-blue); }
+    .btn-green { background-color: var(--btn-green); }
+    .btn-red { background-color: var(--btn-red); }
+
+    /* Progress Bars */
+    .progress-bar {
+        text-align: center;
+        padding: 6px;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+    .bg-green { background-color: var(--bar-green); color: #155724; }
+    .bg-blue { background-color: var(--bar-blue); color: #002d7a; }
+    .bg-cyan { background-color: var(--bar-cyan); color: #005c6e; }
+    .bg-yellow { background-color: var(--bar-yellow); color: #856404; }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        width: 85%;
+        max-width: 400px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    .modal-content h3 { margin-top: 0; text-align: center; }
+    
+    .player-list {
+        margin-bottom: 20px;
+        max-height: 150px;
+        overflow-y: auto;
+        border: 1px solid #eee;
+        border-radius: 8px;
+    }
+    .player-item {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .player-item:last-child { border-bottom: none; }
+    .player-item:active { background-color: #f0f0f0; }
+    .player-item.active-player {
+        background-color: var(--bar-blue);
+        font-weight: bold;
+    }
+
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+    .input-group input {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px;
+    }
+    .btn-modal {
+        padding: 12px;
+        background: var(--btn-blue);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        width: 100%;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-bottom: 10px;
+    }
+    .btn-close {
+        background: var(--btn-gray);
+    }
+
+</style>
+</head>
+<body>
+
+    <div class="app-header">
+        <span class="title">Newhaven FC Match Tracker</span>
+        <button class="btn-export" onclick="exportCSV()">Export</button>
+    </div>
+
+    <!-- CLICKABLE PLAYER SELECTION BANNER -->
+    <div class="player-info" onclick="openModal()">
+        <span id="activePlayerDisplay">👕 Tap here to add/select player</span>
+        <span class="player-hint" id="activePlayerHint">Currently viewing: No player selected</span>
+    </div>
+
+    <!-- PLAYER SUMMARY -->
+    <div class="card">
+        <div class="card-title">Player Summary</div>
+        <div class="row">
+            <div class="stat-group">
+                <div class="stat-label">Minutes</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('mins', -1)">-</button>
+                    <div class="stat-value" id="mins">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('mins', 1)">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Goals</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('goals', -1)">-</button>
+                    <div class="stat-value" id="goals">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('goals', 1)">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="stat-group">
+                <div class="stat-label">Assists</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('assists', -1)">-</button>
+                    <div class="stat-value" id="assists">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('assists', 1)">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Dribbles (Succ)</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('dribbles', -1)">-</button>
+                    <div class="stat-value" id="dribbles">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('dribbles', 1)">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PASSING PERFORMANCE -->
+    <div class="card">
+        <div class="card-title">Passing Performance</div>
+        <div class="row">
+            <div class="stat-group">
+                <div class="stat-label">Successful</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('passSucc', -1, 'pass')">-</button>
+                    <div class="stat-value" id="passSucc">0</div>
+                    <button class="btn btn-green" onclick="updateStatCalc('passSucc', 1, 'pass')">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Unsuccessful</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('passFail', -1, 'pass')">-</button>
+                    <div class="stat-value" id="passFail">0</div>
+                    <button class="btn btn-red" onclick="updateStatCalc('passFail', 1, 'pass')">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="progress-bar bg-green" id="passBar">Completion: 0% (0/0)</div>
+    </div>
+
+    <!-- ATTACKING DUELS & OUTPUT -->
+    <div class="card">
+        <div class="card-title">Attacking Duels & Output</div>
+        <div class="row">
+            <div class="stat-group">
+                <div class="stat-label">Shots on Target</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('shotOn', -1, 'shot')">-</button>
+                    <div class="stat-value" id="shotOn">0</div>
+                    <button class="btn btn-blue" onclick="updateStatCalc('shotOn', 1, 'shot')">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Shots Off Target</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('shotOff', -1, 'shot')">-</button>
+                    <div class="stat-value" id="shotOff">0</div>
+                    <button class="btn btn-blue" onclick="updateStatCalc('shotOff', 1, 'shot')">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="progress-bar bg-blue" id="shotBar">Shot Accuracy: 0% (0/0)</div>
+
+        <div class="row" style="margin-top: 15px;">
+            <div class="stat-group">
+                <div class="stat-label">Crosses (Succ)</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('crossSucc', -1, 'cross')">-</button>
+                    <div class="stat-value" id="crossSucc">0</div>
+                    <button class="btn btn-blue" onclick="updateStatCalc('crossSucc', 1, 'cross')">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Crosses (Failed)</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('crossFail', -1, 'cross')">-</button>
+                    <div class="stat-value" id="crossFail">0</div>
+                    <button class="btn btn-blue" onclick="updateStatCalc('crossFail', 1, 'cross')">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="progress-bar bg-cyan" id="crossBar">Cross Completion: 0% (0/0)</div>
+    </div>
+
+    <!-- DEFENDING & DUELS -->
+    <div class="card">
+        <div class="card-title">Defending & Duels</div>
+        <div class="row">
+            <div class="stat-group">
+                <div class="stat-label">Tackles Won</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('tackWon', -1, 'tackle')">-</button>
+                    <div class="stat-value" id="tackWon">0</div>
+                    <button class="btn btn-blue" onclick="updateStatCalc('tackWon', 1, 'tackle')">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Tackles Lost</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStatCalc('tackLost', -1, 'tackle')">-</button>
+                    <div class="stat-value" id="tackLost">0</div>
+                    <button class="btn btn-red" onclick="updateStatCalc('tackLost', 1, 'tackle')">+</button>
+                </div>
+            </div>
+        </div>
+        <div class="progress-bar bg-yellow" id="tackleBar">Tackle Success: 0% (0/0)</div>
+
+        <div class="row" style="margin-top: 15px;">
+            <div class="stat-group">
+                <div class="stat-label">Interceptions</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('intcpt', -1)">-</button>
+                    <div class="stat-value" id="intcpt">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('intcpt', 1)">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Dispossessed</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('disposs', -1)">-</button>
+                    <div class="stat-value" id="disposs">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('disposs', 1)">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOULS & DISCIPLINE -->
+    <div class="card">
+        <div class="card-title">Fouls & Discipline</div>
+        <div class="row">
+            <div class="stat-group">
+                <div class="stat-label">Fouls Won</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('foulWon', -1)">-</button>
+                    <div class="stat-value" id="foulWon">0</div>
+                    <button class="btn btn-blue" onclick="updateStat('foulWon', 1)">+</button>
+                </div>
+            </div>
+            <div class="stat-group">
+                <div class="stat-label">Fouls Conceded</div>
+                <div class="stat-val-container">
+                    <button class="btn btn-minus" onclick="updateStat('foulCon', -1)">-</button>
+                    <div class="stat-value" id="foulCon">0</div>
+                    <button class="btn btn-red" onclick="updateStat('foulCon', 1)">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FOR PLAYER ROSTER -->
+    <div id="playerModal" class="modal">
+        <div class="modal-content">
+            <h3>Team Roster</h3>
+            <div class="player-list" id="playerList">
+                <!-- Players injected here via JS -->
+            </div>
+            
+            <hr style="border: 0.5px solid #ddd; margin: 15px 0;">
+            
+            <h4 style="margin-top:0; text-align:center;">Add New Player</h4>
+            <div class="input-group">
+                <input type="text" id="newName" placeholder="Player Name">
+                <input type="number" id="newNumber" placeholder="Shirt Number">
+                <input type="text" id="newPos" placeholder="Position (e.g. LW, CM)">
+            </div>
+            <button class="btn-modal" onclick="addPlayer()">Add Player to Team</button>
+            <button class="btn-modal btn-close" onclick="closeModal()">Close Window</button>
+        </div>
+    </div>
+
+<script>
+    // State Management - Switched to 'var' for TrebEdit hot-reload support
+    var players = {};
+    var currentPlayerId = null;
+    var statKeys = ['mins', 'goals', 'assists', 'dribbles', 'passSucc', 'passFail', 'shotOn', 'shotOff', 'crossSucc', 'crossFail', 'tackWon', 'tackLost', 'intcpt', 'disposs', 'foulWon', 'foulCon'];
+
+    // UI Update Logic
+    function updateUI() {
+        if (!currentPlayerId) {
+            document.getElementById('activePlayerDisplay').innerText = "👕 Tap here to add/select player";
+            document.getElementById('activePlayerHint').innerText = "Currently viewing: No player selected";
+            statKeys.forEach(function(key) {
+                document.getElementById(key).innerText = '0';
+            });
+            updateBars(null);
+            return;
+        }
+
+        var p = players[currentPlayerId];
+        document.getElementById('activePlayerDisplay').innerText = `👕 #${p.number} ${p.name}`;
+        document.getElementById('activePlayerHint').innerText = `Position: ${p.position} (Tap to change player)`;
+
+        statKeys.forEach(function(key) {
+            document.getElementById(key).innerText = p.stats[key];
+        });
+        updateBars(p.stats);
+    }
+
+    function updateBars(stats) {
+        if(!stats) {
+            document.getElementById('passBar').innerText = `Completion: 0% (0/0)`;
+            document.getElementById('shotBar').innerText = `Shot Accuracy: 0% (0/0)`;
+            document.getElementById('crossBar').innerText = `Cross Completion: 0% (0/0)`;
+            document.getElementById('tackleBar').innerText = `Tackle Success: 0% (0/0)`;
+            return;
+        }
+
+        // Passing
+        var passTotal = stats.passSucc + stats.passFail;
+        var passPerc = passTotal === 0 ? 0 : Math.round((stats.passSucc / passTotal) * 100);
+        document.getElementById('passBar').innerText = `Completion: ${passPerc}% (${stats.passSucc}/${passTotal})`;
+
+        // Shooting
+        var shotTotal = stats.shotOn + stats.shotOff;
+        var shotPerc = shotTotal === 0 ? 0 : Math.round((stats.shotOn / shotTotal) * 100);
+        document.getElementById('shotBar').innerText = `Shot Accuracy: ${shotPerc}% (${stats.shotOn}/${shotTotal})`;
+
+        // Crosses
+        var crossTotal = stats.crossSucc + stats.crossFail;
+        var crossPerc = crossTotal === 0 ? 0 : Math.round((stats.crossSucc / crossTotal) * 100);
+        document.getElementById('crossBar').innerText = `Cross Completion: ${crossPerc}% (${stats.crossSucc}/${crossTotal})`;
+
+        // Tackles
+        var tackTotal = stats.tackWon + stats.tackLost;
+        var tackPerc = tackTotal === 0 ? 0 : Math.round((stats.tackWon / tackTotal) * 100);
+        document.getElementById('tackleBar').innerText = `Tackle Success: ${tackPerc}% (${stats.tackWon}/${tackTotal})`;
+    }
+
+    // Stat Modification Logic
+    function updateStat(id, change) {
+        if (!currentPlayerId) {
+            alert("Please add and select a player from the menu first!");
+            openModal();
+            return;
+        }
+        
+        var currentVal = players[currentPlayerId].stats[id];
+        var newVal = currentVal + change;
+        if (newVal < 0) newVal = 0;
+        
+        players[currentPlayerId].stats[id] = newVal;
+        document.getElementById(id).innerText = newVal;
+    }
+
+    function updateStatCalc(id, change, type) {
+        if (!currentPlayerId) {
+            alert("Please add and select a player from the menu first!");
+            openModal();
+            return;
+        }
+        updateStat(id, change);
+        updateBars(players[currentPlayerId].stats);
+    }
+
+    // Modal & Roster Logic
+    function openModal() {
+        document.getElementById('playerModal').style.display = 'flex';
+        renderPlayerList();
+    }
+
+    function closeModal() {
+        document.getElementById('playerModal').style.display = 'none';
+    }
+
+    function renderPlayerList() {
+        var list = document.getElementById('playerList');
+        list.innerHTML = '';
+        
+        var count = 0;
+        for (var id in players) {
+            count++;
+            var p = players[id];
+            var div = document.createElement('div');
+            div.className = 'player-item';
+            if (id === currentPlayerId) div.classList.add('active-player');
+            
+            div.innerHTML = `<span><b>#${p.number} ${p.name}</b> - ${p.position}</span> <span>&#x276F;</span>`;
+            
+            // Using a closure to bind the ID properly
+            (function(playerId) {
+                div.onclick = function() { selectPlayer(playerId); };
+            })(id);
+            
+            list.appendChild(div);
+        }
+
+        if(count === 0) {
+            list.innerHTML = '<div style="padding:10px; text-align:center; color:#666;">No players added yet.</div>';
+        }
+    }
+
+    function addPlayer() {
+        var name = document.getElementById('newName').value.trim();
+        var num = document.getElementById('newNumber').value.trim();
+        var pos = document.getElementById('newPos').value.trim();
+
+        if(!name || !num) {
+            alert("Please enter both a Player Name and a Shirt Number.");
+            return;
+        }
+
+        var id = Date.now().toString();
+        players[id] = {
+            name: name, 
+            number: num, 
+            position: pos || 'N/A',
+            stats: {
+                mins: 0, goals: 0, assists: 0, dribbles: 0,
+                passSucc: 0, passFail: 0, shotOn: 0, shotOff: 0,
+                crossSucc: 0, crossFail: 0, tackWon: 0, tackLost: 0,
+                intcpt: 0, disposs: 0, foulWon: 0, foulCon: 0
+            }
+        };
+
+        // Clear inputs
+        document.getElementById('newName').value = '';
+        document.getElementById('newNumber').value = '';
+        document.getElementById('newPos').value = '';
+
+        // Auto-select the newly added player
+        selectPlayer(id);
+    }
+
+    function selectPlayer(id) {
+        currentPlayerId = id;
+        updateUI();
+        closeModal();
+    }
+
+    // Export to CSV Logic
+    function exportCSV() {
+        if (Object.keys(players).length === 0) {
+            alert("No players have been added yet!");
+            return;
+        }
+
+        var csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Name,Number,Position,Minutes,Goals,Assists,Dribbles (Succ),Passes (Succ),Passes (Fail),Shots on Target,Shots off Target,Crosses (Succ),Crosses (Failed),Tackles Won,Tackles Lost,Interceptions,Dispossessed,Fouls Won,Fouls Conceded\n";
+
+        for (var id in players) {
+            var p = players[id];
+            var s = p.stats;
+            var row = `${p.name},${p.number},${p.position},${s.mins},${s.goals},${s.assists},${s.dribbles},${s.passSucc},${s.passFail},${s.shotOn},${s.shotOff},${s.crossSucc},${s.crossFail},${s.tackWon},${s.tackLost},${s.intcpt},${s.disposs},${s.foulWon},${s.foulCon}`;
+            csvContent += row + "\n";
+        }
+
+        var encodedUri = encodeURI(csvContent);
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "Match_Stats.csv");
+        
+        document.body.appendChild(link); 
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+</body>
+</html>
