@@ -28,7 +28,7 @@
 
     /* Header */
     .app-header {
-        background-color: #2c3e50; /* Slightly different color for GK app */
+        background-color: #2c3e50; 
         color: white;
         padding: 15px 20px;
         display: flex;
@@ -208,11 +208,13 @@
         gap: 10px;
         margin-bottom: 15px;
     }
-    .input-group input {
+    .input-group input, .input-group select {
         padding: 10px;
         border: 1px solid #ccc;
         border-radius: 6px;
         font-size: 16px;
+        font-family: inherit;
+        background-color: white;
     }
     .btn-modal {
         padding: 12px;
@@ -239,7 +241,7 @@
 <body onload="updateUI()">
 
     <div class="app-header">
-        <span class="title"> GK Stat Tracker</span>
+        <span class="title">Newhaven FC GK Tracker</span>
         <button class="btn-export" onclick="exportCSV()">Export</button>
     </div>
 
@@ -432,6 +434,22 @@
             <div class="input-group">
                 <input type="text" id="newName" placeholder="Player Name">
                 <input type="number" id="newNumber" placeholder="Shirt Number (e.g. 1)">
+                
+                <!-- NEW POSITION DROPDOWN MENU -->
+                <select id="newPos" onchange="checkOutfieldRedirect()">
+                    <option value="" disabled selected>Select Position...</option>
+                    <option value="ST">Striker (ST)</option>
+                    <option value="LW">Left Wing (LW)</option>
+                    <option value="RW">Right Wing (RW)</option>
+                    <option value="CAM">Attacking Mid (CAM)</option>
+                    <option value="CM">Central Mid (CM)</option>
+                    <option value="CDM">Defensive Mid (CDM)</option>
+                    <option value="LB">Left Back (LB)</option>
+                    <option value="CB">Center Back (CB)</option>
+                    <option value="RB">Right Back (RB)</option>
+                    <option value="GK">Goalkeeper (GK)</option>
+                </select>
+                
             </div>
             <button class="btn-modal" onclick="addPlayer()">Add GK to Team</button>
             <button class="btn-modal btn-close" onclick="closeModal()">Close Window</button>
@@ -449,6 +467,18 @@
     var currentPlayerId = savedCurrentId ? savedCurrentId : null;
     
     var statKeys = ['mins', 'spills', 'saves', 'goalsConc', 'kickSucc', 'kickFail', 'throwSucc', 'throwFail', 'crossClaim', 'punch', 'sweep', 'oneVone', 'pensFaced', 'pensSaved', 'foulWon', 'foulCon'];
+
+    // Function to check if Outfield position is selected in dropdown
+    function checkOutfieldRedirect() {
+        var pos = document.getElementById('newPos').value;
+        if (pos !== 'GK' && pos !== '') {
+            if(confirm("Outfield players use different stats! Would you like to jump over to the Outfield Tracker now?")) {
+                window.location.href = "index.html";
+            } else {
+                document.getElementById('newPos').value = "GK"; // Reset dropdown to GK if they cancel
+            }
+        }
+    }
 
     // Function to save data to device memory
     function saveData() {
@@ -607,6 +637,7 @@
         // Clear inputs
         document.getElementById('newName').value = '';
         document.getElementById('newNumber').value = '';
+        document.getElementById('newPos').value = '';
 
         saveData();
         selectPlayer(id);
@@ -655,6 +686,7 @@
     window.updateStatCalc = updateStatCalc;
     window.exportCSV = exportCSV;
     window.clearAllData = clearAllData;
+    window.checkOutfieldRedirect = checkOutfieldRedirect;
 </script>
 
 </body>
