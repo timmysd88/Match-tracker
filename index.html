@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Match Stat Tracker</title>
+<title>Newhaven FC Match Tracker</title>
 <style>
     :root {
         --bg-main: #f0f2f6;
@@ -54,7 +54,7 @@
         opacity: 0.8;
     }
 
-    /* Player Info Banner (Clickable) */
+    /* Player Info Banner */
     .player-info {
         background: white;
         text-align: center;
@@ -235,13 +235,12 @@
         background: var(--btn-red);
         margin-top: 20px;
     }
-
 </style>
 </head>
 <body onload="updateUI()">
 
     <div class="app-header">
-        <span class="title">Newhaven FC Match Tracker</span>
+        <span class="title">Newhaven FC Tracker</span>
         <button class="btn-export" onclick="exportCSV()">Export</button>
     </div>
 
@@ -251,180 +250,351 @@
         <span class="player-hint" id="activePlayerHint">Currently viewing: No player selected</span>
     </div>
 
-    <!-- PLAYER SUMMARY -->
-    <div class="card">
-        <div class="card-title">Player Summary</div>
-        <div class="row">
-            <div class="stat-group">
-                <div class="stat-label">Minutes</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStat('mins', -1)">-</button>
-                    <div class="stat-value" id="mins">0</div>
-                    <button class="btn btn-blue" onclick="updateStat('mins', 1)">+</button>
+    <!-- ========================================== -->
+    <!-- OUTFIELD PLAYER UI                         -->
+    <!-- ========================================== -->
+    <div id="outfieldUI" style="display: none;">
+        <div class="card">
+            <div class="card-title">Player Summary</div>
+            <div class="row">
+                <div class="stat-group">
+                    <div class="stat-label">Minutes</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('mins', -1)">-</button>
+                        <div class="stat-value" id="mins">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('mins', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Goals</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('goals', -1)">-</button>
+                        <div class="stat-value" id="goals">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('goals', 1)">+</button>
+                    </div>
                 </div>
             </div>
-            <div class="stat-group">
-                <div class="stat-label">Goals</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStat('goals', -1)">-</button>
-                    <div class="stat-value" id="goals">0</div>
-                    <button class="btn btn-blue" onclick="updateStat('goals', 1)">+</button>
+            <div class="row">
+                <div class="stat-group">
+                    <div class="stat-label">Assists</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('assists', -1)">-</button>
+                        <div class="stat-value" id="assists">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('assists', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Dribbles (Succ)</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('dribbles', -1)">-</button>
+                        <div class="stat-value" id="dribbles">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('dribbles', 1)">+</button>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="row">
-            <div class="stat-group">
-                <div class="stat-label">Assists</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStat('assists', -1)">-</button>
-                    <div class="stat-value" id="assists">0</div>
-                    <button class="btn btn-blue" onclick="updateStat('assists', 1)">+</button>
+
+        <div class="card">
+            <div class="card-title">Passing Performance</div>
+            <div class="row">
+                <div class="stat-group">
+                    <div class="stat-label">Successful</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('passSucc', -1)">-</button>
+                        <div class="stat-value" id="passSucc">0</div>
+                        <button class="btn btn-green" onclick="updateStatCalc('passSucc', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Unsuccessful</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('passFail', -1)">-</button>
+                        <div class="stat-value" id="passFail">0</div>
+                        <button class="btn btn-red" onclick="updateStatCalc('passFail', 1)">+</button>
+                    </div>
                 </div>
             </div>
-            <div class="stat-group">
-                <div class="stat-label">Dribbles (Succ)</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStat('dribbles', -1)">-</button>
-                    <div class="stat-value" id="dribbles">0</div>
-                    <button class="btn btn-blue" onclick="updateStat('dribbles', 1)">+</button>
+            <div class="progress-bar bg-green" id="passBar">Completion: 0% (0/0)</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Attacking Duels & Output</div>
+            <div class="row">
+                <div class="stat-group">
+                    <div class="stat-label">Shots on Target</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('shotOn', -1)">-</button>
+                        <div class="stat-value" id="shotOn">0</div>
+                        <button class="btn btn-blue" onclick="updateStatCalc('shotOn', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Shots Off Target</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('shotOff', -1)">-</button>
+                        <div class="stat-value" id="shotOff">0</div>
+                        <button class="btn btn-blue" onclick="updateStatCalc('shotOff', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar bg-blue" id="shotBar">Shot Accuracy: 0% (0/0)</div>
+
+            <div class="row" style="margin-top: 15px;">
+                <div class="stat-group">
+                    <div class="stat-label">Crosses (Succ)</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('crossSucc', -1)">-</button>
+                        <div class="stat-value" id="crossSucc">0</div>
+                        <button class="btn btn-blue" onclick="updateStatCalc('crossSucc', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Crosses (Failed)</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('crossFail', -1)">-</button>
+                        <div class="stat-value" id="crossFail">0</div>
+                        <button class="btn btn-blue" onclick="updateStatCalc('crossFail', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar bg-cyan" id="crossBar">Cross Completion: 0% (0/0)</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Defending & Duels</div>
+            <div class="row">
+                <div class="stat-group">
+                    <div class="stat-label">Tackles Won</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('tackWon', -1)">-</button>
+                        <div class="stat-value" id="tackWon">0</div>
+                        <button class="btn btn-blue" onclick="updateStatCalc('tackWon', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Tackles Lost</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('tackLost', -1)">-</button>
+                        <div class="stat-value" id="tackLost">0</div>
+                        <button class="btn btn-red" onclick="updateStatCalc('tackLost', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar bg-yellow" id="tackleBar">Tackle Success: 0% (0/0)</div>
+
+            <div class="row" style="margin-top: 15px;">
+                <div class="stat-group">
+                    <div class="stat-label">Interceptions</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('intcpt', -1)">-</button>
+                        <div class="stat-value" id="intcpt">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('intcpt', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Dispossessed</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('disposs', -1)">-</button>
+                        <div class="stat-value" id="disposs">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('disposs', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Fouls & Discipline</div>
+            <div class="row">
+                <div class="stat-group">
+                    <div class="stat-label">Fouls Won</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('foulWon', -1)">-</button>
+                        <div class="stat-value" id="foulWon">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('foulWon', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Fouls Conceded</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('foulCon', -1)">-</button>
+                        <div class="stat-value" id="foulCon">0</div>
+                        <button class="btn btn-red" onclick="updateStat('foulCon', 1)">+</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- PASSING PERFORMANCE -->
-    <div class="card">
-        <div class="card-title">Passing Performance</div>
-        <div class="row">
-            <div class="stat-group">
-                <div class="stat-label">Successful</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStatCalc('passSucc', -1, 'pass')">-</button>
-                    <div class="stat-value" id="passSucc">0</div>
-                    <button class="btn btn-green" onclick="updateStatCalc('passSucc', 1, 'pass')">+</button>
+    <!-- ========================================== -->
+    <!-- GOALKEEPER UI                              -->
+    <!-- ========================================== -->
+    <div id="gkUI" style="display: none;">
+        <div class="card">
+            <div class="card-title">Shot Stopping</div>
+            <div class="row">
+                <div class="stat-group">
+                    <div class="stat-label">Minutes</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('mins', -1)">-</button>
+                        <div class="stat-value" id="gk_mins">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('mins', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Drops / Spills</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('spills', -1)">-</button>
+                        <div class="stat-value" id="spills">0</div>
+                        <button class="btn btn-red" onclick="updateStat('spills', 1)">+</button>
+                    </div>
                 </div>
             </div>
-            <div class="stat-group">
-                <div class="stat-label">Unsuccessful</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStatCalc('passFail', -1, 'pass')">-</button>
-                    <div class="stat-value" id="passFail">0</div>
-                    <button class="btn btn-red" onclick="updateStatCalc('passFail', 1, 'pass')">+</button>
+            <div class="row">
+                <div class="stat-group">
+                    <div class="stat-label">Saves Made</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('saves', -1)">-</button>
+                        <div class="stat-value" id="saves">0</div>
+                        <button class="btn btn-green" onclick="updateStatCalc('saves', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Goals Conceded</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('goalsConc', -1)">-</button>
+                        <div class="stat-value" id="goalsConc">0</div>
+                        <button class="btn btn-red" onclick="updateStatCalc('goalsConc', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar bg-green" id="saveBar">Save Percentage: 0% (0/0)</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Distribution</div>
+            <div class="row">
+                <div class="stat-group">
+                    <div class="stat-label">Kicks (Succ)</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('kickSucc', -1)">-</button>
+                        <div class="stat-value" id="kickSucc">0</div>
+                        <button class="btn btn-blue" onclick="updateStatCalc('kickSucc', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Kicks (Fail)</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('kickFail', -1)">-</button>
+                        <div class="stat-value" id="kickFail">0</div>
+                        <button class="btn btn-blue" onclick="updateStatCalc('kickFail', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar bg-blue" id="kickBar">Kicking Accuracy: 0% (0/0)</div>
+
+            <div class="row" style="margin-top: 15px;">
+                <div class="stat-group">
+                    <div class="stat-label">Throws (Succ)</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('throwSucc', -1)">-</button>
+                        <div class="stat-value" id="throwSucc">0</div>
+                        <button class="btn btn-blue" onclick="updateStatCalc('throwSucc', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Throws (Fail)</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStatCalc('throwFail', -1)">-</button>
+                        <div class="stat-value" id="throwFail">0</div>
+                        <button class="btn btn-blue" onclick="updateStatCalc('throwFail', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="progress-bar bg-cyan" id="throwBar">Throwing Accuracy: 0% (0/0)</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Command of Area</div>
+            <div class="row">
+                <div class="stat-group">
+                    <div class="stat-label">Crosses Claimed</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('crossClaim', -1)">-</button>
+                        <div class="stat-value" id="crossClaim">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('crossClaim', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Punches</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('punch', -1)">-</button>
+                        <div class="stat-value" id="punch">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('punch', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" style="margin-top: 15px;">
+                <div class="stat-group">
+                    <div class="stat-label">Sweeper Actions</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('sweep', -1)">-</button>
+                        <div class="stat-value" id="sweep">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('sweep', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">1v1s Won</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('oneVone', -1)">-</button>
+                        <div class="stat-value" id="oneVone">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('oneVone', 1)">+</button>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="progress-bar bg-green" id="passBar">Completion: 0% (0/0)</div>
+
+        <div class="card">
+            <div class="card-title">Penalties & Discipline</div>
+            <div class="row">
+                <div class="stat-group">
+                    <div class="stat-label">Pens Faced</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('pensFaced', -1)">-</button>
+                        <div class="stat-value" id="pensFaced">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('pensFaced', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Pens Saved</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('pensSaved', -1)">-</button>
+                        <div class="stat-value" id="pensSaved">0</div>
+                        <button class="btn btn-green" onclick="updateStat('pensSaved', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="row" style="margin-top: 15px;">
+                <div class="stat-group">
+                    <div class="stat-label">Fouls Won</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('foulWon', -1)">-</button>
+                        <div class="stat-value" id="gk_foulWon">0</div>
+                        <button class="btn btn-blue" onclick="updateStat('foulWon', 1)">+</button>
+                    </div>
+                </div>
+                <div class="stat-group">
+                    <div class="stat-label">Fouls Conceded</div>
+                    <div class="stat-val-container">
+                        <button class="btn btn-minus" onclick="updateStat('foulCon', -1)">-</button>
+                        <div class="stat-value" id="gk_foulCon">0</div>
+                        <button class="btn btn-red" onclick="updateStat('foulCon', 1)">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- ATTACKING DUELS & OUTPUT -->
-    <div class="card">
-        <div class="card-title">Attacking Duels & Output</div>
-        <div class="row">
-            <div class="stat-group">
-                <div class="stat-label">Shots on Target</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStatCalc('shotOn', -1, 'shot')">-</button>
-                    <div class="stat-value" id="shotOn">0</div>
-                    <button class="btn btn-blue" onclick="updateStatCalc('shotOn', 1, 'shot')">+</button>
-                </div>
-            </div>
-            <div class="stat-group">
-                <div class="stat-label">Shots Off Target</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStatCalc('shotOff', -1, 'shot')">-</button>
-                    <div class="stat-value" id="shotOff">0</div>
-                    <button class="btn btn-blue" onclick="updateStatCalc('shotOff', 1, 'shot')">+</button>
-                </div>
-            </div>
-        </div>
-        <div class="progress-bar bg-blue" id="shotBar">Shot Accuracy: 0% (0/0)</div>
-
-        <div class="row" style="margin-top: 15px;">
-            <div class="stat-group">
-                <div class="stat-label">Crosses (Succ)</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStatCalc('crossSucc', -1, 'cross')">-</button>
-                    <div class="stat-value" id="crossSucc">0</div>
-                    <button class="btn btn-blue" onclick="updateStatCalc('crossSucc', 1, 'cross')">+</button>
-                </div>
-            </div>
-            <div class="stat-group">
-                <div class="stat-label">Crosses (Failed)</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStatCalc('crossFail', -1, 'cross')">-</button>
-                    <div class="stat-value" id="crossFail">0</div>
-                    <button class="btn btn-blue" onclick="updateStatCalc('crossFail', 1, 'cross')">+</button>
-                </div>
-            </div>
-        </div>
-        <div class="progress-bar bg-cyan" id="crossBar">Cross Completion: 0% (0/0)</div>
-    </div>
-
-    <!-- DEFENDING & DUELS -->
-    <div class="card">
-        <div class="card-title">Defending & Duels</div>
-        <div class="row">
-            <div class="stat-group">
-                <div class="stat-label">Tackles Won</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStatCalc('tackWon', -1, 'tackle')">-</button>
-                    <div class="stat-value" id="tackWon">0</div>
-                    <button class="btn btn-blue" onclick="updateStatCalc('tackWon', 1, 'tackle')">+</button>
-                </div>
-            </div>
-            <div class="stat-group">
-                <div class="stat-label">Tackles Lost</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStatCalc('tackLost', -1, 'tackle')">-</button>
-                    <div class="stat-value" id="tackLost">0</div>
-                    <button class="btn btn-red" onclick="updateStatCalc('tackLost', 1, 'tackle')">+</button>
-                </div>
-            </div>
-        </div>
-        <div class="progress-bar bg-yellow" id="tackleBar">Tackle Success: 0% (0/0)</div>
-
-        <div class="row" style="margin-top: 15px;">
-            <div class="stat-group">
-                <div class="stat-label">Interceptions</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStat('intcpt', -1)">-</button>
-                    <div class="stat-value" id="intcpt">0</div>
-                    <button class="btn btn-blue" onclick="updateStat('intcpt', 1)">+</button>
-                </div>
-            </div>
-            <div class="stat-group">
-                <div class="stat-label">Dispossessed</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStat('disposs', -1)">-</button>
-                    <div class="stat-value" id="disposs">0</div>
-                    <button class="btn btn-blue" onclick="updateStat('disposs', 1)">+</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- FOULS & DISCIPLINE -->
-    <div class="card">
-        <div class="card-title">Fouls & Discipline</div>
-        <div class="row">
-            <div class="stat-group">
-                <div class="stat-label">Fouls Won</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStat('foulWon', -1)">-</button>
-                    <div class="stat-value" id="foulWon">0</div>
-                    <button class="btn btn-blue" onclick="updateStat('foulWon', 1)">+</button>
-                </div>
-            </div>
-            <div class="stat-group">
-                <div class="stat-label">Fouls Conceded</div>
-                <div class="stat-val-container">
-                    <button class="btn btn-minus" onclick="updateStat('foulCon', -1)">-</button>
-                    <div class="stat-value" id="foulCon">0</div>
-                    <button class="btn btn-red" onclick="updateStat('foulCon', 1)">+</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- MODAL FOR PLAYER ROSTER -->
     <div id="playerModal" class="modal">
@@ -441,8 +611,7 @@
                 <input type="text" id="newName" placeholder="Player Name">
                 <input type="number" id="newNumber" placeholder="Shirt Number">
                 
-                <!-- NEW POSITION DROPDOWN MENU -->
-                <select id="newPos" onchange="checkGKRedirect()">
+                <select id="newPos">
                     <option value="" disabled selected>Select Position...</option>
                     <option value="ST">Striker (ST)</option>
                     <option value="LW">Left Wing (LW)</option>
@@ -465,34 +634,26 @@
     </div>
 
 <script>
-    // State Management - Loading from Local Storage if it exists
-    var savedPlayers = localStorage.getItem('matchTrackerPlayers');
-    var savedCurrentId = localStorage.getItem('matchTrackerCurrentId');
+    // Unified State Management
+    var savedPlayers = localStorage.getItem('unifiedTrackerPlayers') || localStorage.getItem('matchTrackerPlayers');
+    var savedCurrentId = localStorage.getItem('unifiedTrackerCurrentId') || localStorage.getItem('matchTrackerCurrentId');
 
     var players = savedPlayers ? JSON.parse(savedPlayers) : {};
     var currentPlayerId = savedCurrentId ? savedCurrentId : null;
     
-    var statKeys = ['mins', 'goals', 'assists', 'dribbles', 'passSucc', 'passFail', 'shotOn', 'shotOff', 'crossSucc', 'crossFail', 'tackWon', 'tackLost', 'intcpt', 'disposs', 'foulWon', 'foulCon'];
-
-    // Function to check if GK is selected in dropdown
-    function checkGKRedirect() {
-        var pos = document.getElementById('newPos').value;
-        if (pos === 'GK') {
-            if(confirm("Goalkeepers use different stats! Would you like to jump over to the Goalkeeper Tracker now?")) {
-                window.location.href = "gk-tracker.html";
-            } else {
-                document.getElementById('newPos').value = ""; // Reset dropdown if they cancel
-            }
-        }
-    }
+    // Master list of all possible stats for all positions
+    var allStatKeys = [
+        'mins', 'goals', 'assists', 'dribbles', 'passSucc', 'passFail', 'shotOn', 'shotOff', 'crossSucc', 'crossFail', 'tackWon', 'tackLost', 'intcpt', 'disposs', 'foulWon', 'foulCon',
+        'spills', 'saves', 'goalsConc', 'kickSucc', 'kickFail', 'throwSucc', 'throwFail', 'crossClaim', 'punch', 'sweep', 'oneVone', 'pensFaced', 'pensSaved'
+    ];
 
     // Function to save data to device memory
     function saveData() {
-        localStorage.setItem('matchTrackerPlayers', JSON.stringify(players));
+        localStorage.setItem('unifiedTrackerPlayers', JSON.stringify(players));
         if (currentPlayerId) {
-            localStorage.setItem('matchTrackerCurrentId', currentPlayerId);
+            localStorage.setItem('unifiedTrackerCurrentId', currentPlayerId);
         } else {
-            localStorage.removeItem('matchTrackerCurrentId');
+            localStorage.removeItem('unifiedTrackerCurrentId');
         }
     }
 
@@ -513,51 +674,68 @@
         if (!currentPlayerId || !players[currentPlayerId]) {
             document.getElementById('activePlayerDisplay').innerText = "👕 Tap here to add/select player";
             document.getElementById('activePlayerHint').innerText = "Currently viewing: No player selected";
-            statKeys.forEach(function(key) {
-                document.getElementById(key).innerText = '0';
-            });
-            updateBars(null);
+            document.getElementById('outfieldUI').style.display = 'none';
+            document.getElementById('gkUI').style.display = 'none';
             return;
         }
 
         var p = players[currentPlayerId];
-        document.getElementById('activePlayerDisplay').innerText = `👕 #${p.number} ${p.name}`;
-        document.getElementById('activePlayerHint').innerText = `Position: ${p.position} (Tap to change player)`;
+        var isGK = (p.position === 'GK');
 
-        statKeys.forEach(function(key) {
-            document.getElementById(key).innerText = p.stats[key];
-        });
-        updateBars(p.stats);
-    }
+        document.getElementById('activePlayerDisplay').innerText = (isGK ? '🧤' : '👕') + ` #${p.number} ${p.name}`;
+        document.getElementById('activePlayerHint').innerText = `Position: ${p.position} (Tap to change)`;
 
-    function updateBars(stats) {
-        if(!stats) {
-            document.getElementById('passBar').innerText = `Completion: 0% (0/0)`;
-            document.getElementById('shotBar').innerText = `Shot Accuracy: 0% (0/0)`;
-            document.getElementById('crossBar').innerText = `Cross Completion: 0% (0/0)`;
-            document.getElementById('tackleBar').innerText = `Tackle Success: 0% (0/0)`;
-            return;
+        // Toggle which UI to show based on position
+        if (isGK) {
+            document.getElementById('outfieldUI').style.display = 'none';
+            document.getElementById('gkUI').style.display = 'block';
+        } else {
+            document.getElementById('outfieldUI').style.display = 'block';
+            document.getElementById('gkUI').style.display = 'none';
         }
 
-        // Passing
-        var passTotal = stats.passSucc + stats.passFail;
-        var passPerc = passTotal === 0 ? 0 : Math.round((stats.passSucc / passTotal) * 100);
-        document.getElementById('passBar').innerText = `Completion: ${passPerc}% (${stats.passSucc}/${passTotal})`;
+        // Update all stat numbers on screen
+        allStatKeys.forEach(function(key) {
+            if(document.getElementById(key)) document.getElementById(key).innerText = p.stats[key] || 0;
+            if(document.getElementById('gk_' + key)) document.getElementById('gk_' + key).innerText = p.stats[key] || 0;
+        });
 
-        // Shooting
-        var shotTotal = stats.shotOn + stats.shotOff;
-        var shotPerc = shotTotal === 0 ? 0 : Math.round((stats.shotOn / shotTotal) * 100);
-        document.getElementById('shotBar').innerText = `Shot Accuracy: ${shotPerc}% (${stats.shotOn}/${shotTotal})`;
+        updateBars(p.stats, isGK);
+    }
 
-        // Crosses
-        var crossTotal = stats.crossSucc + stats.crossFail;
-        var crossPerc = crossTotal === 0 ? 0 : Math.round((stats.crossSucc / crossTotal) * 100);
-        document.getElementById('crossBar').innerText = `Cross Completion: ${crossPerc}% (${stats.crossSucc}/${crossTotal})`;
+    // Update Percentage Bars
+    function updateBars(stats, isGK) {
+        if(!stats) return;
 
-        // Tackles
-        var tackTotal = stats.tackWon + stats.tackLost;
-        var tackPerc = tackTotal === 0 ? 0 : Math.round((stats.tackWon / tackTotal) * 100);
-        document.getElementById('tackleBar').innerText = `Tackle Success: ${tackPerc}% (${stats.tackWon}/${tackTotal})`;
+        if (isGK) {
+            var saveTotal = stats.saves + stats.goalsConc;
+            var savePerc = saveTotal === 0 ? 0 : Math.round((stats.saves / saveTotal) * 100);
+            document.getElementById('saveBar').innerText = `Save Percentage: ${savePerc}% (${stats.saves}/${saveTotal} Shots on Target)`;
+
+            var kickTotal = stats.kickSucc + stats.kickFail;
+            var kickPerc = kickTotal === 0 ? 0 : Math.round((stats.kickSucc / kickTotal) * 100);
+            document.getElementById('kickBar').innerText = `Kicking Accuracy: ${kickPerc}% (${stats.kickSucc}/${kickTotal})`;
+
+            var throwTotal = stats.throwSucc + stats.throwFail;
+            var throwPerc = throwTotal === 0 ? 0 : Math.round((stats.throwSucc / throwTotal) * 100);
+            document.getElementById('throwBar').innerText = `Throwing Accuracy: ${throwPerc}% (${stats.throwSucc}/${throwTotal})`;
+        } else {
+            var passTotal = stats.passSucc + stats.passFail;
+            var passPerc = passTotal === 0 ? 0 : Math.round((stats.passSucc / passTotal) * 100);
+            document.getElementById('passBar').innerText = `Completion: ${passPerc}% (${stats.passSucc}/${passTotal})`;
+
+            var shotTotal = stats.shotOn + stats.shotOff;
+            var shotPerc = shotTotal === 0 ? 0 : Math.round((stats.shotOn / shotTotal) * 100);
+            document.getElementById('shotBar').innerText = `Shot Accuracy: ${shotPerc}% (${stats.shotOn}/${shotTotal})`;
+
+            var crossTotal = stats.crossSucc + stats.crossFail;
+            var crossPerc = crossTotal === 0 ? 0 : Math.round((stats.crossSucc / crossTotal) * 100);
+            document.getElementById('crossBar').innerText = `Cross Completion: ${crossPerc}% (${stats.crossSucc}/${crossTotal})`;
+
+            var tackTotal = stats.tackWon + stats.tackLost;
+            var tackPerc = tackTotal === 0 ? 0 : Math.round((stats.tackWon / tackTotal) * 100);
+            document.getElementById('tackleBar').innerText = `Tackle Success: ${tackPerc}% (${stats.tackWon}/${tackTotal})`;
+        }
     }
 
     // Stat Modification Logic
@@ -568,24 +746,28 @@
             return;
         }
         
-        var currentVal = players[currentPlayerId].stats[id];
+        var currentVal = players[currentPlayerId].stats[id] || 0;
         var newVal = currentVal + change;
         if (newVal < 0) newVal = 0;
         
         players[currentPlayerId].stats[id] = newVal;
-        document.getElementById(id).innerText = newVal;
+        
+        // Update both UI elements if they share a name (like mins)
+        if(document.getElementById(id)) document.getElementById(id).innerText = newVal;
+        if(document.getElementById('gk_' + id)) document.getElementById('gk_' + id).innerText = newVal;
         
         saveData(); // Save to memory immediately
     }
 
-    function updateStatCalc(id, change, type) {
+    function updateStatCalc(id, change) {
         if (!currentPlayerId) {
             alert("Please add and select a player from the menu first!");
             openModal();
             return;
         }
         updateStat(id, change);
-        updateBars(players[currentPlayerId].stats);
+        var isGK = (players[currentPlayerId].position === 'GK');
+        updateBars(players[currentPlayerId].stats, isGK);
     }
 
     // Modal & Roster Logic
@@ -612,7 +794,6 @@
             
             div.innerHTML = `<span><b>#${p.number} ${p.name}</b> - ${p.position}</span> <span>&#x276F;</span>`;
             
-            // Using a closure to bind the ID properly
             (function(playerId) {
                 div.onclick = function() { selectPlayer(playerId); };
             })(id);
@@ -628,7 +809,7 @@
     function addPlayer() {
         var name = document.getElementById('newName').value.trim();
         var num = document.getElementById('newNumber').value.trim();
-        var pos = document.getElementById('newPos').value; // Using dropdown value
+        var pos = document.getElementById('newPos').value;
 
         if(!name || !num || !pos) {
             alert("Please enter a Player Name, Shirt Number, and select a Position.");
@@ -636,16 +817,16 @@
         }
 
         var id = Date.now().toString();
+        
+        // Initialize player with 0s for all stats (both outfield and GK)
+        var freshStats = {};
+        allStatKeys.forEach(function(key) { freshStats[key] = 0; });
+
         players[id] = {
             name: name, 
             number: num, 
             position: pos,
-            stats: {
-                mins: 0, goals: 0, assists: 0, dribbles: 0,
-                passSucc: 0, passFail: 0, shotOn: 0, shotOff: 0,
-                crossSucc: 0, crossFail: 0, tackWon: 0, tackLost: 0,
-                intcpt: 0, disposs: 0, foulWon: 0, foulCon: 0
-            }
+            stats: freshStats
         };
 
         // Clear inputs
@@ -659,12 +840,12 @@
 
     function selectPlayer(id) {
         currentPlayerId = id;
-        saveData(); // Save current player selection to memory
+        saveData();
         updateUI();
         closeModal();
     }
 
-    // Export to CSV Logic
+    // Unified Export to CSV Logic
     function exportCSV() {
         if (Object.keys(players).length === 0) {
             alert("No players have been added yet!");
@@ -672,19 +853,21 @@
         }
 
         var csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Name,Number,Position,Minutes,Goals,Assists,Dribbles (Succ),Passes (Succ),Passes (Fail),Shots on Target,Shots off Target,Crosses (Succ),Crosses (Failed),Tackles Won,Tackles Lost,Interceptions,Dispossessed,Fouls Won,Fouls Conceded\n";
+        
+        // Giant header row capturing every possible stat
+        csvContent += "Name,Number,Position,Minutes,Goals,Assists,Dribbles (Succ),Passes (Succ),Passes (Fail),Shots on Target,Shots off Target,Crosses (Succ),Crosses (Failed),Tackles Won,Tackles Lost,Interceptions,Dispossessed,Fouls Won,Fouls Conceded,GK Saves,GK Goals Conceded,GK Drops/Spills,GK Kicks (Succ),GK Kicks (Fail),GK Throws (Succ),GK Throws (Fail),GK Crosses Claimed,GK Punches,GK Sweeper Actions,GK 1v1s Won,GK Pens Faced,GK Pens Saved\n";
 
         for (var id in players) {
             var p = players[id];
             var s = p.stats;
-            var row = `${p.name},${p.number},${p.position},${s.mins},${s.goals},${s.assists},${s.dribbles},${s.passSucc},${s.passFail},${s.shotOn},${s.shotOff},${s.crossSucc},${s.crossFail},${s.tackWon},${s.tackLost},${s.intcpt},${s.disposs},${s.foulWon},${s.foulCon}`;
+            var row = `${p.name},${p.number},${p.position},${s.mins || 0},${s.goals || 0},${s.assists || 0},${s.dribbles || 0},${s.passSucc || 0},${s.passFail || 0},${s.shotOn || 0},${s.shotOff || 0},${s.crossSucc || 0},${s.crossFail || 0},${s.tackWon || 0},${s.tackLost || 0},${s.intcpt || 0},${s.disposs || 0},${s.foulWon || 0},${s.foulCon || 0},${s.saves || 0},${s.goalsConc || 0},${s.spills || 0},${s.kickSucc || 0},${s.kickFail || 0},${s.throwSucc || 0},${s.throwFail || 0},${s.crossClaim || 0},${s.punch || 0},${s.sweep || 0},${s.oneVone || 0},${s.pensFaced || 0},${s.pensSaved || 0}`;
             csvContent += row + "\n";
         }
 
         var encodedUri = encodeURI(csvContent);
         var link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "Match_Stats.csv");
+        link.setAttribute("download", "Team_Match_Stats.csv");
         
         document.body.appendChild(link); 
         link.click();
@@ -699,7 +882,6 @@
     window.updateStatCalc = updateStatCalc;
     window.exportCSV = exportCSV;
     window.clearAllData = clearAllData;
-    window.checkGKRedirect = checkGKRedirect;
 </script>
 
 </body>
